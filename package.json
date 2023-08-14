@@ -1,0 +1,11 @@
+{
+  "name": "all-in-one-server",
+  "version": "1.0.0",
+  "description": "All in one backend",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Joel",
+  "license": "ISC"
+}
