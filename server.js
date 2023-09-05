@@ -8,11 +8,12 @@ const port = process.env.PORT || 3000;
 
 const start = async () => {
   try {
-    await connectDB(process.env.DATABASE);
-
     const server = app.listen(port, () => {
       console.log(`App running on port:  ${port}`);
     });
+
+    await connectDB(process.env.DATABASE);
+
     process.on('unhandledRejection', (error) => {
       console.log(error);
       server.close(() => {

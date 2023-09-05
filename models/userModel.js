@@ -1,3 +1,5 @@
+const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
 const validator = require('validator');
 const { isPasswordValid } = require('../utils/validators');
@@ -22,7 +24,8 @@ const userSchema = new mongoose.Schema({
       validator: function () {
         return isPasswordValid(this.password); // False triggers an error
       },
-      message: 'Password in invalid',
+      message:
+        'Password must include a number, an alphabet character, a symbol, and an uppercase letter.',
     },
     select: false, // This doesn't work on create and save
   },
@@ -36,16 +39,53 @@ const userSchema = new mongoose.Schema({
       },
       message: 'Passwords does not match',
     },
+    select: false,
   },
-  // passwordChangedAt: Date,
-  // passwordResetToken: String,
-  // passwordResetExpires: String,
-  // active: {
-  //   type: Boolean,
-  //   default: true,
-  //   select: false,
-  // },
+  verified: {
+    type: Boolean,
+    default: false,
+    select: false,
+  },
+  active: {
+    type: Boolean,
+    default: true,
+    select: false,
+  },
+
+  passwordChangedAt: Date,
+  passwordResetToken: String,
+  passwordResetExpiresIn: String,
+  emailVerificationToken: String,
+  emailVerificationTokenExpiresIn: String,
 });
+
+userSchema.pre('save', async function (next) {
+  // Prevents the confirmPassword from entering DB
+  this.confirmPassword = undefined;
+
+  // If password path/field is unmodified (create or save) returns
+  if (!this.isModified('password')) return next();
+
+  // Salts and Hashes the password
+  const hashedPassword = await bcrypt.hash(this.password, 12);
+  this.password = hashedPassword;
+
+  next();
+});
+
+userSchema.methods.genEmailVerificationToken = function () {
+  const emailVerificationToken = crypto.randomBytes(32).toString('hex');
+  this.emailVerificationToken = crypto
+    .createHash('sha256')
+    .update(emailVerificationToken)
+    .digest('hex');
+  this.emailVerificationTokenExpiresIn = Date.now() + 60 * 60 * 1000;
+  return emailVerificationToken;
+};
+
+userSchema.methods.correctPassword = async function (claimedPassword) {
+  return await bcrypt.compare(claimedPassword, this.password);
+};
 
 const User = mongoose.model('User', userSchema);
 
