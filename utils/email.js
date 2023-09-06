@@ -1,3 +1,4 @@
+/* eslint-disable node/no-extraneous-require */
 const nodemailer = require('nodemailer');
 const pug = require('pug');
 
